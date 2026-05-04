@@ -1,0 +1,6 @@
+com\sdet\testgen\ApiTestGeneratorApplication.class
+com\sdet\testgen\config\AppConfig.class
+com\sdet\testgen\model\TestGenResponse.class
+com\sdet\testgen\controller\TestGenController.class
+com\sdet\testgen\model\TestGenRequest.class
+com\sdet\testgen\service\OllamaService.class
