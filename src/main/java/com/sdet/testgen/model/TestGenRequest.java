@@ -20,6 +20,8 @@ public class TestGenRequest {
 
     @Data
     public static class EndpointDef {
+        private int id;
+        private String tcNum;
         private String method;
         private String url;
         private String baseUrl;
@@ -28,5 +30,7 @@ public class TestGenRequest {
         private Map<String, String> params;
         private Map<String, String> headers;
         private List<Map<String, String>> responses;
+        private boolean validateResp;
+        private String responseBody;
     }
 }

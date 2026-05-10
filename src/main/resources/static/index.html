@@ -1,837 +1,746 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>BDD Test Generator</title>
-    <style>
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        :root{
-          --bg:#0f1117;--surface:#1a1d27;--surface2:#20243a;--surface3:#252940;
-          --border:#2e3250;--border2:#3a3f65;
-          --text:#e8eaf6;--text2:#9fa8da;--text3:#5c6bc0;
-          --blue:#4f72ff;--blue2:#7c9dff;--blue-glow:rgba(79,114,255,0.18);
-          --green:#43d98c;--green-bg:rgba(67,217,140,0.1);
-          --amber:#ffb74d;--amber-bg:rgba(255,183,77,0.1);
-          --red:#ef5350;--red-bg:rgba(239,83,80,0.1);
-          --purple:#ce93d8;--purple-bg:rgba(206,147,216,0.1);
-          --radius:10px;--radius-sm:6px;
-        }
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;line-height:1.5}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BDD Test Generator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#20243a;--surface3:#252940;
+  --border:#2e3250;--border2:#3a3f65;
+  --text:#e8eaf6;--text2:#9fa8da;--text3:#5c6bc0;
+  --blue:#4f72ff;--blue2:#7c9dff;--blue-glow:rgba(79,114,255,0.18);
+  --green:#43d98c;--green-bg:rgba(67,217,140,0.1);
+  --amber:#ffb74d;--amber-bg:rgba(255,183,77,0.1);
+  --red:#ef5350;--red-bg:rgba(239,83,80,0.1);
+  --purple:#ce93d8;--purple-bg:rgba(206,147,216,0.1);
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 
-        /* ── Scrollbar ── */
-        ::-webkit-scrollbar{width:5px;height:5px}
-        ::-webkit-scrollbar-track{background:var(--surface)}
-        ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+/* ── Header ── */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 22px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,var(--blue),#7c4dff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;box-shadow:0 0 16px var(--blue-glow)}
+header h1{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.chip{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.04em}
+.chip-blue{background:rgba(79,114,255,.15);color:var(--blue2);border:1px solid rgba(79,114,255,.25)}
+.chip-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,.2)}
+.spacer{flex:1}
+.hdr-note{font-size:11px;color:var(--text3);font-family:'Courier New',monospace}
 
-        /* ── Header ── */
-        header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
-        .logo{width:34px;height:34px;background:linear-gradient(135deg,var(--blue),#7c4dff);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;box-shadow:0 0 16px var(--blue-glow)}
-        header h1{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
-        .chip{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:0.04em}
-        .chip-blue{background:rgba(79,114,255,0.15);color:var(--blue2);border:1px solid rgba(79,114,255,0.25)}
-        .chip-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,0.2)}
-        .spacer{flex:1}
-        .header-info{font-size:11px;color:var(--text3)}
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:510px 1fr;height:calc(100vh - 54px)}
+.pane{overflow-y:auto;display:flex;flex-direction:column}
+.pane-left{background:var(--surface);border-right:1px solid var(--border)}
+.pane-right{background:var(--bg)}
+.pane-hd{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:inherit;z-index:20}
+.pane-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.pane-body{padding:14px 18px;flex:1}
 
-        /* ── Layout ── */
-        .layout{display:grid;grid-template-columns:480px 1fr;height:calc(100vh - 56px)}
-        .pane{overflow-y:auto;display:flex;flex-direction:column}
-        .pane-left{background:var(--surface);border-right:1px solid var(--border)}
-        .pane-right{background:var(--bg)}
+/* ── Sections ── */
+.section{margin-bottom:12px}
+.section-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-label::before{content:'';width:3px;height:11px;border-radius:2px;background:var(--blue);flex-shrink:0}
 
-        /* ── Pane header ── */
-        .pane-hd{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:inherit;z-index:20}
-        .pane-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
-        .pane-body{padding:16px 20px;flex:1}
+/* ── Form ── */
+label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px;margin-top:11px}
+label:first-child{margin-top:0}
+input[type=text],input[type=password],select,textarea{
+  width:100%;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:7px 10px;background:var(--surface);color:var(--text);font-family:inherit;
+  transition:border-color .15s,box-shadow .15s;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-glow)}
+select option{background:var(--surface2)}
+textarea{resize:vertical;font-family:'Courier New',monospace;font-size:11.5px;line-height:1.6}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row-method{display:grid;grid-template-columns:86px 1fr;gap:8px}
 
-        /* ── Section ── */
-        .section{margin-bottom:14px}
-        .section-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-        .section-label::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--blue);flex-shrink:0}
-        .card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
+/* ── Endpoint card ── */
+.ep-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+.ep-card:hover{border-color:var(--border2)}
+.ep-card-hd{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;user-select:none}
+.ep-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:4px;min-width:50px;text-align:center;letter-spacing:.04em}
+.ep-badge.GET   {background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,.2)}
+.ep-badge.POST  {background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,183,77,.2)}
+.ep-badge.PUT   {background:var(--blue-glow);color:var(--blue2);border:1px solid rgba(79,114,255,.2)}
+.ep-badge.PATCH {background:var(--purple-bg);color:var(--purple);border:1px solid rgba(206,147,216,.2)}
+.ep-badge.DELETE{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,83,80,.2)}
+.ep-url{font-family:'Courier New',monospace;font-size:12px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-chevron{color:var(--text3);font-size:14px;transition:transform .2s;line-height:1}
+.ep-chevron.open{transform:rotate(90deg)}
+.ep-del{background:none;border:none;color:var(--border2);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;transition:color .15s}
+.ep-del:hover{color:var(--red)}
+.ep-body{display:none;padding:13px 14px;border-top:1px solid var(--border);background:var(--surface)}
+.ep-body.open{display:block}
 
-        /* ── Form ── */
-        label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px;margin-top:12px}
-        label:first-child{margin-top:0}
-        input[type=text],input[type=password],select,textarea{
-          width:100%;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);
-          padding:8px 11px;background:var(--surface);color:var(--text);font-family:inherit;
-          transition:border-color 0.15s,box-shadow 0.15s;outline:none;
-        }
-        input[type=text]:focus,input[type=password]:focus,select:focus,textarea:focus{
-          border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-glow)
-        }
-        select option{background:var(--surface2)}
-        textarea{resize:vertical;font-family:'Courier New',monospace;font-size:11.5px;line-height:1.6}
-        .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .row-method{display:grid;grid-template-columns:88px 1fr;gap:8px}
+/* ── JSON file tag shown on body fields ── */
+.file-tag{font-size:10px;font-family:'Courier New',monospace;color:var(--blue2);background:rgba(79,114,255,.1);border:1px solid rgba(79,114,255,.2);padding:2px 7px;border-radius:4px;margin-left:6px;vertical-align:middle}
 
-        /* ── Method badge ── */
-        select.method-sel{font-weight:700;text-align:center}
-        .badge-GET{color:#43d98c}.badge-POST{color:#ffb74d}.badge-PUT{color:var(--blue2)}.badge-PATCH{color:var(--purple)}.badge-DELETE{color:var(--red)}
+/* ── Validate response toggle ── */
+.resp-toggle{display:flex;align-items:center;gap:8px;margin-top:11px;padding:8px 10px;background:var(--surface3);border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer}
+.resp-toggle input[type=checkbox]{width:14px;height:14px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.resp-toggle-label{font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;margin:0}
+.resp-toggle-hint{font-size:10px;color:var(--text3);margin-left:auto;font-family:'Courier New',monospace}
 
-        /* ── Endpoint card ── */
-        .ep-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;transition:border-color 0.2s}
-        .ep-card:hover{border-color:var(--border2)}
-        .ep-card-hd{display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;user-select:none}
-        .ep-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:5px;min-width:50px;text-align:center;letter-spacing:0.04em}
-        .ep-badge.GET{background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,0.2)}
-        .ep-badge.POST{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,183,77,0.2)}
-        .ep-badge.PUT{background:var(--blue-glow);color:var(--blue2);border:1px solid rgba(79,114,255,0.2)}
-        .ep-badge.PATCH{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(206,147,216,0.2)}
-        .ep-badge.DELETE{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,83,80,0.2)}
-        .ep-url{font-family:'Courier New',monospace;font-size:12px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .ep-chevron{color:var(--text3);font-size:14px;transition:transform 0.2s;line-height:1}
-        .ep-chevron.open{transform:rotate(90deg)}
-        .ep-del{background:none;border:none;color:var(--border2);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;transition:color 0.15s}
-        .ep-del:hover{color:var(--red)}
-        .ep-body{display:none;padding:12px 14px;border-top:1px solid var(--border);background:var(--surface)}
-        .ep-body.open{display:block}
+/* ── KV table ── */
+table.kv{width:100%;border-collapse:collapse}
+table.kv th{font-size:10px;font-weight:600;color:var(--text3);text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+table.kv td{padding:3px 3px}
+table.kv input{font-size:11.5px;padding:6px 8px}
+.kv-del{background:none;border:none;color:var(--border2);cursor:pointer;font-size:15px;padding:2px 5px;transition:color .15s}
+.kv-del:hover{color:var(--red)}
+.btn-add-row{font-size:11px;color:var(--blue2);background:none;border:none;cursor:pointer;padding:5px 0;transition:color .15s}
+.btn-add-row:hover{color:var(--blue)}
 
-        /* ── KV table ── */
-        .kv-wrap{overflow-x:auto}
-        table.kv{width:100%;border-collapse:collapse}
-        table.kv th{font-size:10px;font-weight:600;color:var(--text3);text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.05em}
-        table.kv td{padding:3px 3px}
-        table.kv input{font-size:11.5px;padding:6px 8px}
-        .kv-del{background:none;border:none;color:var(--border2);cursor:pointer;font-size:15px;padding:2px 5px;transition:color 0.15s}
-        .kv-del:hover{color:var(--red)}
-        .btn-add-row{font-size:11px;color:var(--blue2);background:none;border:none;cursor:pointer;padding:5px 0;transition:color 0.15s}
-        .btn-add-row:hover{color:var(--blue)}
+/* ── Mini tabs ── */
+.mini-tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;width:fit-content;margin-bottom:10px}
+.mini-tab{padding:4px 12px;font-size:11px;border:none;background:none;border-radius:4px;cursor:pointer;color:var(--text3);transition:all .15s;font-weight:500}
+.mini-tab.active{background:var(--blue);color:#fff;box-shadow:0 0 10px var(--blue-glow)}
 
-        /* ── Mini tabs ── */
-        .mini-tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;width:fit-content;margin-bottom:10px}
-        .mini-tab{padding:4px 12px;font-size:11px;border:none;background:none;border-radius:4px;cursor:pointer;color:var(--text3);transition:all 0.15s;font-weight:500}
-        .mini-tab.active{background:var(--blue);color:#fff;box-shadow:0 0 10px var(--blue-glow)}
+/* ── Buttons ── */
+.btn-gen{width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),#7c4dff);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em;box-shadow:0 0 20px var(--blue-glow);transition:opacity .15s,box-shadow .15s}
+.btn-gen:hover{box-shadow:0 0 30px rgba(79,114,255,.35)}
+.btn-gen:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-add-ep{width:100%;padding:10px;border:1px dashed var(--border2);border-radius:var(--radius);background:none;color:var(--blue2);font-size:12px;cursor:pointer;font-weight:600;transition:all .15s;letter-spacing:.02em}
+.btn-add-ep:hover{background:var(--blue-glow);border-color:var(--blue)}
+.btn-push{padding:7px 16px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn-push:hover{opacity:.88}
+.btn-ghost{padding:5px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:none;color:var(--text2);font-size:11px;cursor:pointer;transition:all .15s}
+.btn-ghost:hover{border-color:var(--text2)}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;flex-shrink:0}
+@keyframes rot{to{transform:rotate(360deg)}}
 
-        /* ── Buttons ── */
-        .btn-gen{width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),#7c4dff);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.02em;transition:opacity 0.15s,box-shadow 0.15s;box-shadow:0 0 20px var(--blue-glow)}
-        .btn-gen:hover{box-shadow:0 0 30px rgba(79,114,255,0.35)}
-        .btn-gen:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none}
-        .btn-add-ep{width:100%;padding:10px;border:1px dashed var(--border2);border-radius:var(--radius);background:none;color:var(--blue2);font-size:12px;cursor:pointer;font-weight:600;transition:all 0.15s;letter-spacing:0.02em}
-        .btn-add-ep:hover{background:var(--blue-glow);border-color:var(--blue)}
-        .btn-push{padding:7px 16px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;transition:opacity 0.15s;letter-spacing:0.02em}
-        .btn-push:hover{opacity:0.88}
-        .btn-ghost{padding:6px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:none;color:var(--text2);font-size:11px;cursor:pointer;transition:all 0.15s}
-        .btn-ghost:hover{border-color:var(--text2);color:var(--text)}
+/* ── Status ── */
+.statusbar{padding:8px 18px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface);z-index:10}
+.statusbar.err{color:var(--red);background:var(--red-bg)}
+.statusbar.ok{color:var(--green);background:var(--green-bg)}
 
-        /* ── Spinner ── */
-        .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:rot 0.7s linear infinite;flex-shrink:0}
-        @keyframes rot{to{transform:rotate(360deg)}}
+/* ── Progress ── */
+.prog{display:none;gap:6px;margin-bottom:12px}
+.prog.show{display:flex}
+.prog-step{flex:1;padding:5px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:10px;font-weight:600;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:.05em;transition:all .3s}
+.prog-step.active{background:var(--blue-glow);border-color:var(--blue);color:var(--blue2)}
+.prog-step.done{background:var(--green-bg);border-color:rgba(67,217,140,.3);color:var(--green)}
 
-        /* ── Status ── */
-        .statusbar{padding:9px 20px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface);z-index:10}
-        .statusbar.err{color:var(--red);background:var(--red-bg)}
-        .statusbar.ok{color:var(--green);background:var(--green-bg)}
+/* ── Output ── */
+.out-hd{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:20}
+.out-tabs{display:flex;gap:4px}
+.out-tab{padding:5px 13px;font-size:11px;font-weight:600;border:1px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text3);transition:all .15s;letter-spacing:.03em}
+.out-tab.active{background:var(--surface2);border-color:var(--border2);color:var(--text)}
+.out-body{padding:14px 18px;flex:1}
+.file-pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;background:var(--surface2);color:var(--blue2);padding:4px 10px;border-radius:20px;margin-bottom:10px;font-family:'Courier New',monospace;border:1px solid var(--border)}
+.code-wrap{position:relative}
+.code-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'Courier New',monospace;font-size:11.5px;line-height:1.7;white-space:pre-wrap;overflow-y:auto;max-height:calc(100vh - 185px);color:#abb2bf;display:none}
+.code-block.active{display:block}
+.copy-btn{position:absolute;top:10px;right:10px;font-size:11px;font-weight:600;padding:4px 11px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;z-index:2}
+.copy-btn:hover{background:var(--border2);color:var(--text)}
+.badge-count{display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,.2);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:12px;color:var(--text3);text-align:center}
+.empty-icon{font-size:36px;opacity:.35}
+.empty h3{font-size:14px;font-weight:600;color:var(--text2)}
+.empty p{font-size:12px;line-height:1.7;max-width:300px}
 
-        /* ── Progress ── */
-        .prog{display:none;gap:6px;margin-bottom:12px}
-        .prog.show{display:flex}
-        .prog-step{flex:1;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:10px;font-weight:600;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.3s}
-        .prog-step.active{background:var(--blue-glow);border-color:var(--blue);color:var(--blue2)}
-        .prog-step.done{background:var(--green-bg);border-color:rgba(67,217,140,0.3);color:var(--green)}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:24px;width:440px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:2px}
+.modal-sub{font-size:11px;color:var(--text3);margin-bottom:16px}
+.modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.btn-cancel{padding:8px 16px;border:1px solid var(--border2);border-radius:7px;background:none;font-size:12px;cursor:pointer;color:var(--text2)}
+.btn-modal-push{padding:8px 18px;background:var(--green);color:#0a1a0f;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px}
+.btn-modal-push:disabled{opacity:.5;cursor:not-allowed}
+.push-result{margin-top:12px;font-size:11px;padding:10px 12px;border-radius:7px;display:none;line-height:1.8}
+.push-result.ok{background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,.2);display:block}
+.push-result.err{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,83,80,.2);display:block}
+.push-result a{color:inherit;font-weight:700;text-decoration:underline}
+.push-result code{font-size:10px;background:rgba(0,0,0,.2);padding:1px 5px;border-radius:3px}
+.token-note{font-size:10px;color:var(--text3);margin-top:3px}
 
-        /* ── Output ── */
-        .out-hd{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:20}
-        .out-tabs{display:flex;gap:4px}
-        .out-tab{padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text3);transition:all 0.15s;letter-spacing:0.03em}
-        .out-tab.active{background:var(--surface2);border-color:var(--border2);color:var(--text)}
-        .out-body{padding:16px 20px;flex:1}
-        .file-pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;background:var(--surface2);color:var(--blue2);padding:4px 10px;border-radius:20px;margin-bottom:10px;font-family:'Courier New',monospace;border:1px solid var(--border)}
-        .file-pill::before{content:'📄';font-size:11px}
-        .code-wrap{position:relative}
-        .code-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'Courier New',monospace;font-size:11.5px;line-height:1.7;white-space:pre-wrap;overflow-y:auto;max-height:calc(100vh - 200px);color:#abb2bf;display:none}
-        .code-block.active{display:block}
-        /* Syntax hints */
-        .code-block{color:#abb2bf}
-        .copy-btn{position:absolute;top:10px;right:10px;font-size:11px;font-weight:600;padding:4px 11px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s;z-index:2}
-        .copy-btn:hover{background:var(--border2);color:var(--text)}
-        .badge-count{display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,0.2);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px}
-
-        /* ── Empty state ── */
-        .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:12px;color:var(--text3);text-align:center}
-        .empty-icon{font-size:36px;opacity:0.4}
-        .empty h3{font-size:14px;font-weight:600;color:var(--text2)}
-        .empty p{font-size:12px;line-height:1.7;max-width:300px}
-
-        /* ── Modal ── */
-        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-        .modal-overlay.open{display:flex}
-        .modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:26px;width:440px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
-        .modal-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px}
-        .modal-sub{font-size:11px;color:var(--text3);margin-bottom:18px}
-        .modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
-        .btn-modal-cancel{padding:8px 16px;border:1px solid var(--border2);border-radius:7px;background:none;font-size:12px;cursor:pointer;color:var(--text2);transition:all 0.15s}
-        .btn-modal-cancel:hover{border-color:var(--text2)}
-        .btn-modal-push{padding:8px 18px;background:var(--green);color:#0a1a0f;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;transition:opacity 0.15s}
-        .btn-modal-push:disabled{opacity:0.5;cursor:not-allowed}
-        .push-result{margin-top:12px;font-size:11px;padding:11px 13px;border-radius:7px;display:none;line-height:1.8}
-        .push-result.ok{background:var(--green-bg);color:var(--green);border:1px solid rgba(67,217,140,0.2);display:block}
-        .push-result.err{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,83,80,0.2);display:block}
-        .push-result a{color:inherit;font-weight:700;text-decoration:underline}
-        .push-result code{font-size:10px;background:rgba(0,0,0,0.2);padding:1px 5px;border-radius:3px}
-        .token-note{font-size:10px;color:var(--text3);margin-top:3px}
-
-        /* ── TC Data files ── */
-        .tc-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
-        .tc-card-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2)}
-        .tc-num{font-size:10px;font-weight:800;padding:2px 9px;border-radius:4px;background:rgba(79,114,255,0.15);color:var(--blue2);border:1px solid rgba(79,114,255,0.2);font-family:'Courier New',monospace;letter-spacing:0.03em}
-        .tc-label{font-size:12px;color:var(--text2);flex:1}
-        .tc-del{background:none;border:none;color:var(--border2);cursor:pointer;font-size:16px;padding:0 3px;transition:color 0.15s}
-        .tc-del:hover{color:var(--red)}
-        .tc-body{padding:10px 12px;border-top:1px solid var(--border);background:var(--surface)}
-        .env-pills{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
-        .env-pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);color:var(--text3);background:var(--surface2)}
-        .env-pill.dev{background:rgba(67,217,140,0.08);color:var(--green);border-color:rgba(67,217,140,0.2)}
-        .env-pill.qa{background:rgba(79,114,255,0.08);color:var(--blue2);border-color:rgba(79,114,255,0.2)}
-        .env-pill.staging{background:rgba(255,183,77,0.08);color:var(--amber);border-color:rgba(255,183,77,0.2)}
-        .env-pill.prod{background:rgba(239,83,80,0.08);color:var(--red);border-color:rgba(239,83,80,0.2)}
-        .info-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 13px;font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:10px}
-        .info-box strong{color:var(--text2)}
-        .info-box code{font-family:'Courier New',monospace;font-size:10.5px;color:var(--blue2);background:rgba(79,114,255,0.08);padding:1px 5px;border-radius:3px}
-    </style>
+/* ── Info note ── */
+.info-note{font-size:11px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 11px;line-height:1.7;margin-bottom:10px}
+.info-note code{font-size:10.5px;color:var(--blue2);background:rgba(79,114,255,.08);padding:1px 5px;border-radius:3px;font-family:'Courier New',monospace}
+</style>
 </head>
 <body>
 
 <header>
-    <div class="logo">⚡</div>
-    <h1>BDD Test Generator</h1>
-    <span class="chip chip-blue">Ollama · Local AI</span>
-    <span class="chip chip-green">Cucumber BDD</span>
-    <span class="chip chip-blue center">Hi SIR Wellcome Back...</span>
-    <div class="spacer"></div>
-    <span class="header-info">x-api-key · restUtils · JUnit</span>
+  <div class="logo">⚡</div>
+  <h1>BDD Test Generator</h1>
+  <span class="chip chip-blue">Ollama · Local AI</span>
+  <span class="chip chip-green">Cucumber · BDD</span>
+  <div class="spacer"></div>
+  <span class="hdr-note">x-api-key · Jackson · JUnit · -Denv=dev|qa|staging|prod</span>
 </header>
 
 <div class="layout">
 
-    <!-- ══════════════════════════════════════════
-         LEFT — Requirements Builder
-    ══════════════════════════════════════════ -->
-    <div class="pane pane-left">
-        <div class="pane-hd">
-            <span class="pane-title">Requirements Builder</span>
-            <button class="btn-ghost" onclick="clearAll()">Clear all</button>
-        </div>
-        <div class="pane-body">
+<!-- ══════════════════════════════════════════
+     LEFT — Requirements Builder
+══════════════════════════════════════════ -->
+<div class="pane pane-left">
+  <div class="pane-hd">
+    <span class="pane-title">Requirements Builder</span>
+    <button class="btn-ghost" onclick="clearAll()">Clear all</button>
+  </div>
+  <div class="pane-body">
 
-            <!-- Feature / Story -->
-            <div class="section">
-                <div class="section-label">Feature &amp; Story</div>
-                <div class="card">
-                    <label>Feature name <span
-                            style="color:var(--text3);font-weight:400">(used as filename)</span></label>
-                    <input type="text" id="feature-name"
-                           placeholder="e.g. GetProductById · CreateOrder · UpdateUserProfile"/>
-                    <label>Acceptance Criteria <span style="color:var(--text3);font-weight:400">(scenarios are generated only from this)</span></label>
-                    <textarea id="ac" rows="5"
-                              placeholder="AC1: Returns 200 with product details when a valid product ID is provided&#10;AC2: Returns 404 with error message when product ID does not exist&#10;AC3: Returns 401 when x-api-key header is missing"></textarea>
-                </div>
-            </div>
-
-            <!-- Global Headers -->
-            <div class="section">
-                <div class="section-label">Global Headers</div>
-                <div class="card">
-                    <div class="mini-tabs">
-                        <button class="mini-tab active" onclick="switchHdrMode('kv')">Key-Value</button>
-                        <button class="mini-tab" onclick="switchHdrMode('raw')">Raw JSON</button>
-                    </div>
-                    <div id="hdr-kv">
-                        <div class="kv-wrap">
-                            <table class="kv">
-                                <thead>
-                                <tr>
-                                    <th>Key</th>
-                                    <th>Value</th>
-                                    <th></th>
-                                </tr>
-                                </thead>
-                                <tbody id="global-hdr-body">
-                                <tr>
-                                    <td><input type="text" value="Content-Type"/></td>
-                                    <td><input type="text" value="application/json"/></td>
-                                    <td>
-                                        <button class="kv-del" onclick="delRow(this)">×</button>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <button class="btn-add-row" onclick="addHdrRow()">＋ Add header</button>
-                    </div>
-                    <div id="hdr-raw" style="display:none">
-                        <textarea id="hdr-raw-val" rows="3"
-                                  placeholder='{"Content-Type":"application/json","Accept":"application/json"}'></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Endpoints -->
-            <div class="section">
-                <div class="section-label">Endpoints</div>
-                <div id="ep-container"></div>
-                <button class="btn-add-ep" onclick="addEndpoint()">＋ Add Endpoint</button>
-            </div>
-
-            <!-- Test Data Files -->
-            <div class="section">
-                <div class="section-label">Test Data Files <span
-                        style="font-size:10px;color:var(--text3);text-transform:none;letter-spacing:0;font-weight:400">(request bodies for POST/PUT/PATCH)</span>
-                </div>
-                <div class="info-box">
-                    Request bodies stored as <code>TC_01_request.json</code>, expected responses as <code>TC_01_response.json</code><br/>
-                    Path: <code>src/test/resources/testdata/{FeatureName}/</code><br/>
-                    Read at runtime via Jackson — no hardcoded JSON in Java.<br/>
-                    Switch env at runtime: <code>-Denv=dev</code> · <code>-Denv=qa</code> · <code>-Denv=staging</code> ·
-                    <code>-Denv=prod</code>
-                </div>
-                <div id="tc-container"></div>
-                <button class="btn-add-ep" onclick="addTcFile()" style="margin-top:4px">＋ Add Test Data File</button>
-            </div>
-
-            <!-- Options -->
-            <div class="section" style="margin-top:14px">
-                <div class="section-label">Generation Options</div>
-                <div class="card">
-                    <label>Coverage focus</label>
-                    <select id="coverage">
-                        <option value="ac">Acceptance Criteria only (recommended)</option>
-                        <option value="happy">Happy path only</option>
-                        <option value="negative">Negative / error scenarios</option>
-                        <option value="edge">Edge cases</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Progress + Generate -->
-            <div class="prog" id="prog">
-                <div class="prog-step" id="ps1">Feature File</div>
-                <div class="prog-step" id="ps2">Step Definitions</div>
-            </div>
-            <button class="btn-gen" id="gen-btn" onclick="generate()">
-                <span id="btn-text">Generate BDD Test Suite</span>
-            </button>
-
-        </div>
-        <div class="statusbar" id="status">Add acceptance criteria and at least one endpoint to get started.</div>
+    <!-- ① Feature & Story -->
+    <div class="section">
+      <div class="section-label">Feature &amp; Story</div>
+      <label>Feature name <span style="color:var(--text3);font-weight:400">(used as filename &amp; test data folder)</span></label>
+      <input type="text" id="feature-name" placeholder="e.g. CreateProduct · GetOrderById · UpdateUser"/>
+      <label>Acceptance Criteria <span style="color:var(--text3);font-weight:400">(one AC = one Scenario)</span></label>
+      <textarea id="ac" rows="4" placeholder="AC1: Returns 200 with product details when valid product ID is provided&#10;AC2: Returns 404 with error message when product ID does not exist&#10;AC3: Returns 401 when x-api-key is missing or invalid"></textarea>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         RIGHT — Output
-    ══════════════════════════════════════════ -->
-    <div class="pane pane-right">
-        <div class="out-hd">
-            <div style="display:flex;align-items:center;gap:8px">
-                <div class="out-tabs">
-                    <button class="out-tab active" onclick="switchOut('feature')">Feature File</button>
-                    <button class="out-tab" onclick="switchOut('stepdefs')">Step Definitions</button>
-                </div>
-                <span class="badge-count" id="scen-badge" style="display:none"></span>
-            </div>
-            <button class="btn-push" id="push-btn" style="display:none" onclick="openModal()">↑ Push to GitHub</button>
-        </div>
-
-        <div class="out-body">
-            <div id="empty-state" class="empty">
-                <div class="empty-icon">🧪</div>
-                <h3>No output yet</h3>
-                <p>Fill in your acceptance criteria, add endpoints with request details, then hit
-                    <strong>Generate</strong>.</p>
-                <p style="font-size:11px;color:var(--text3);margin-top:4px">Generates a .feature file + fully
-                    implemented step definitions with x-api-key auth.</p>
-            </div>
-
-            <div id="out-area" style="display:none">
-
-                <div id="panel-feature">
-                    <div class="file-pill" id="lbl-feature"></div>
-                    <div class="code-wrap">
-                        <button class="copy-btn" onclick="doCopy('feature')">Copy</button>
-                        <pre class="code-block active" id="code-feature"></pre>
-                    </div>
-                </div>
-
-                <div id="panel-stepdefs" style="display:none">
-                    <div class="file-pill" id="lbl-stepdefs"></div>
-                    <div class="code-wrap">
-                        <button class="copy-btn" onclick="doCopy('stepdefs')">Copy</button>
-                        <pre class="code-block active" id="code-stepdefs"></pre>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+    <!-- ② Global Headers -->
+    <div class="section">
+      <div class="section-label">Global Headers</div>
+      <div class="mini-tabs">
+        <button class="mini-tab active" onclick="switchHdrMode('kv')">Key-Value</button>
+        <button class="mini-tab" onclick="switchHdrMode('raw')">Raw JSON</button>
+      </div>
+      <div id="hdr-kv">
+        <table class="kv"><thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
+        <tbody id="global-hdr-body">
+          <tr>
+            <td><input type="text" value="Content-Type"/></td>
+            <td><input type="text" value="application/json"/></td>
+            <td><button class="kv-del" onclick="delRow(this)">×</button></td>
+          </tr>
+        </tbody></table>
+        <button class="btn-add-row" onclick="addHdrRow()">＋ Add header</button>
+      </div>
+      <div id="hdr-raw" style="display:none">
+        <textarea id="hdr-raw-val" rows="3" placeholder='{"Content-Type":"application/json"}'></textarea>
+      </div>
     </div>
 
+    <!-- ③ Endpoints -->
+    <div class="section">
+      <div class="section-label">Endpoints</div>
+      <div class="info-note">
+        Request bodies are stored as <code>TC_01_request.json</code> and read at runtime via Jackson.<br/>
+        Check <strong>Validate response</strong> per endpoint to also store &amp; assert <code>TC_01_response.json</code>.
+      </div>
+      <div id="ep-container"></div>
+      <button class="btn-add-ep" onclick="addEndpoint()">＋ Add Endpoint</button>
+    </div>
+
+    <!-- ④ Coverage -->
+    <div class="section" style="margin-top:14px">
+      <div class="section-label">Generation Options</div>
+      <label>Coverage focus</label>
+      <select id="coverage">
+        <option value="ac">Acceptance Criteria only (recommended)</option>
+        <option value="happy">Happy path only</option>
+        <option value="negative">Negative / error scenarios</option>
+        <option value="edge">Edge cases</option>
+      </select>
+    </div>
+
+    <!-- Progress + Generate -->
+    <div class="prog" id="prog">
+      <div class="prog-step" id="ps1">Feature File</div>
+      <div class="prog-step" id="ps2">Step Definitions</div>
+    </div>
+    <button class="btn-gen" id="gen-btn" onclick="generate()">
+      <span id="btn-text">Generate BDD Test Suite</span>
+    </button>
+
+  </div>
+  <div class="statusbar" id="status">Add acceptance criteria and at least one endpoint to get started.</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     RIGHT — Output
+══════════════════════════════════════════ -->
+<div class="pane pane-right">
+  <div class="out-hd">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="out-tabs">
+        <button class="out-tab active" onclick="switchOut('feature')">Feature File</button>
+        <button class="out-tab" onclick="switchOut('stepdefs')">Step Definitions</button>
+      </div>
+      <span class="badge-count" id="scen-badge" style="display:none"></span>
+    </div>
+    <button class="btn-push" id="push-btn" style="display:none" onclick="openModal()">↑ Push to GitHub</button>
+  </div>
+  <div class="out-body">
+
+    <div id="empty-state" class="empty">
+      <div class="empty-icon">🧪</div>
+      <h3>No output yet</h3>
+      <p>Fill acceptance criteria, add endpoints with request bodies, then hit <strong>Generate</strong>.</p>
+      <p style="font-size:11px;color:var(--text3);margin-top:4px">
+        Generates a .feature file + step definitions with x-api-key auth, Jackson JSON reading, console logging &amp; Javadoc.
+      </p>
+    </div>
+
+    <div id="out-area" style="display:none">
+      <div id="panel-feature">
+        <div class="file-pill" id="lbl-feature">📄</div>
+        <div class="code-wrap">
+          <button class="copy-btn" onclick="doCopy('feature')">Copy</button>
+          <pre class="code-block active" id="code-feature"></pre>
+        </div>
+      </div>
+      <div id="panel-stepdefs" style="display:none">
+        <div class="file-pill" id="lbl-stepdefs">📄</div>
+        <div class="code-wrap">
+          <button class="copy-btn" onclick="doCopy('stepdefs')">Copy</button>
+          <pre class="code-block active" id="code-stepdefs"></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 </div><!-- .layout -->
 
-<!-- ══ Modal ══ -->
+<!-- ══ Push Modal ══ -->
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
-    <div class="modal">
-        <div class="modal-title">Push to GitHub</div>
-        <div class="modal-sub">Pushes <strong>.feature</strong> + <strong>StepDefinitions.java</strong> into your repo
-        </div>
-        <label>GitHub Personal Access Token</label>
-        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
-        <div class="token-note">Requires Contents: Read &amp; Write · Token is never stored</div>
-        <div class="row2" style="margin-top:10px">
-            <div><label>Repo owner</label><input type="text" id="gh-owner" value="mpavanka"/></div>
-            <div><label>Repo name</label><input type="text" id="gh-repo" value="rest-Assuerd"/></div>
-        </div>
-        <div class="row2" style="margin-top:8px">
-            <div><label>Base branch</label><input type="text" id="gh-base" value="test"/></div>
-            <div><label>Feature branch</label><input type="text" id="gh-branch"
-                                                     placeholder="feature/get-product-tests"/></div>
-        </div>
-        <div id="push-result" class="push-result"></div>
-        <div class="modal-actions">
-            <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
-            <button class="btn-modal-push" id="push-confirm" onclick="doPush()">
-                <span id="push-btn-text">Push 2 files</span>
-            </button>
-        </div>
+  <div class="modal">
+    <div class="modal-title">Push to GitHub</div>
+    <div class="modal-sub">Pushes .feature + StepDefinitions + TC JSON files into your repo</div>
+    <label>GitHub Personal Access Token</label>
+    <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
+    <div class="token-note">Contents: Read &amp; Write · Token is never stored</div>
+    <div class="row2" style="margin-top:10px">
+      <div><label>Repo owner</label><input type="text" id="gh-owner" value="mpavanka"/></div>
+      <div><label>Repo name</label><input type="text" id="gh-repo" value="rest-Assuerd"/></div>
     </div>
+    <div class="row2" style="margin-top:8px">
+      <div><label>Base branch</label><input type="text" id="gh-base" value="test"/></div>
+      <div><label>Feature branch</label><input type="text" id="gh-branch" placeholder="feature/create-product-tests"/></div>
+    </div>
+    <div id="push-result" class="push-result"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-push" id="push-confirm" onclick="doPush()">
+        <span id="push-btn-text">Push files</span>
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
-    // ═══════════════════════════════════════
-    // State
-    // ═══════════════════════════════════════
-    let epCount = 0, endpoints = [];
-    let activeOut = 'feature', hdrMode = 'kv';
-    let lastFeature = '', lastStepDefs = '', lastFeatureName = '';
+// ═══════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════
+let epCount = 0, endpoints = [];
+let activeOut = 'feature', hdrMode = 'kv';
+let lastFeature = '', lastStepDefs = '', lastFeatureName = '';
 
-    // ═══════════════════════════════════════
-    // Endpoint management
-    // ═══════════════════════════════════════
-    function addEndpoint() {
-      const id = ++epCount;
-      endpoints.push({ id });
-      const el = document.createElement('div');
-      el.className = 'ep-card'; el.id = 'ep-' + id;
-      el.innerHTML = epTemplate(id);
-      document.getElementById('ep-container').appendChild(el);
-      toggleEp(id, true);
-      onMethodChange(id);
-    }
+// ═══════════════════════════════════════════════════════
+// Endpoint management
+// ═══════════════════════════════════════════════════════
+function addEndpoint() {
+  const id = ++epCount;
+  const tcNum = 'TC_' + String(id).padStart(2, '0');
+  endpoints.push({ id, tcNum });
+  const el = document.createElement('div');
+  el.className = 'ep-card'; el.id = 'ep-' + id;
+  el.innerHTML = epTemplate(id, tcNum);
+  document.getElementById('ep-container').appendChild(el);
+  toggleEp(id, true);
+  onMethodChange(id);
+}
 
-    function epTemplate(id) {
-      return `
-      <div class="ep-card-hd" onclick="toggleEp(${id})">
-        <span class="ep-badge GET" id="epb-${id}">GET</span>
-        <span class="ep-url" id="epu-${id}">/api/endpoint</span>
-        <span class="ep-chevron open" id="epc-${id}">›</span>
-        <button class="ep-del" onclick="delEp(event,${id})">×</button>
+function epTemplate(id, tcNum) {
+  return `
+  <div class="ep-card-hd" onclick="toggleEp(${id})">
+    <span class="ep-badge GET" id="epb-${id}">GET</span>
+    <span class="ep-url" id="epu-${id}">/api/endpoint</span>
+    <span style="font-size:10px;color:var(--text3);font-family:'Courier New',monospace;margin-left:4px">${tcNum}</span>
+    <span class="ep-chevron open" id="epc-${id}">›</span>
+    <button class="ep-del" onclick="delEp(event,${id})">×</button>
+  </div>
+  <div class="ep-body open" id="epbody-${id}">
+
+    <div class="row-method">
+      <div>
+        <label>Method</label>
+        <select id="epm-${id}" onchange="onMethodChange(${id})">
+          <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+        </select>
       </div>
-      <div class="ep-body open" id="epbody-${id}">
+      <div>
+        <label>Endpoint URL</label>
+        <input type="text" id="epurl-${id}" placeholder="/api/v1/resource/{id}" oninput="updatePreview(${id})"/>
+      </div>
+    </div>
 
-        <div class="row-method">
-          <div>
-            <label>Method</label>
-            <select id="epm-${id}" class="method-sel" onchange="onMethodChange(${id})">
-              <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
-            </select>
-          </div>
-          <div>
-            <label>Endpoint URL</label>
-            <input type="text" id="epurl-${id}" placeholder="/api/v1/resource/{id}" oninput="updatePreview(${id})"/>
-          </div>
-        </div>
+    <label>Base URL <span style="color:var(--text3);font-weight:400">(optional override per endpoint)</span></label>
+    <input type="text" id="epbase-${id}" placeholder="https://api.example.com  (leave blank to use env-resolved URL)"/>
 
-        <label>Base URL</label>
-        <input type="text" id="epbase-${id}" placeholder="https://api.example.com"/>
+    <label>Description</label>
+    <input type="text" id="epdesc-${id}" placeholder="What this endpoint does"/>
 
-        <label>Description</label>
-        <input type="text" id="epdesc-${id}" placeholder="What this endpoint does"/>
+    <label>Path &amp; Query Parameters</label>
+    <table class="kv"><thead><tr><th>Name</th><th>Example value</th><th></th></tr></thead>
+    <tbody id="epparams-${id}">
+      <tr><td><input type="text" placeholder="id"/></td><td><input type="text" placeholder="123"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td></tr>
+    </tbody></table>
+    <button class="btn-add-row" onclick="addParamRow(${id})">＋ Add param</button>
 
-        <div id="ep-body-section-${id}" style="display:none">
-          <label>Request Body (JSON)</label>
-          <textarea id="epjson-${id}" rows="4" placeholder='{"name":"Product A","price":99.99,"category":"electronics"}'></textarea>
-        </div>
+    <label>Endpoint-specific Headers</label>
+    <table class="kv"><thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
+    <tbody id="ephdrs-${id}"></tbody></table>
+    <button class="btn-add-row" onclick="addEpHdrRow(${id})">＋ Add header</button>
 
-        <label style="margin-top:10px">Path &amp; Query Parameters</label>
-        <table class="kv"><thead><tr><th>Name</th><th>Example value</th><th></th></tr></thead>
-        <tbody id="epparams-${id}">
-          <tr><td><input type="text" placeholder="id"/></td><td><input type="text" placeholder="123"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td></tr>
-        </tbody></table>
-        <button class="btn-add-row" onclick="addParamRow(${id})">＋ Add param</button>
+    <!-- Request body — shown for POST/PUT/PATCH -->
+    <div id="ep-req-section-${id}" style="display:none">
+      <label>
+        Request Body (JSON)
+        <span class="file-tag">${tcNum}_request.json</span>
+      </label>
+      <textarea id="epjson-${id}" rows="6" placeholder='{"name":"Apple MacBook Pro 16","data":{"year":2019,"price":2049.99,"color":"silver"}}'></textarea>
+    </div>
 
-        <label style="margin-top:10px">Endpoint-specific Headers</label>
-        <table class="kv"><thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
-        <tbody id="ephdrs-${id}"></tbody></table>
-        <button class="btn-add-row" onclick="addEpHdrRow(${id})">＋ Add header</button>
+    <label>Expected Responses</label>
+    <table class="kv"><thead><tr><th style="width:72px">Status</th><th>Description</th><th></th></tr></thead>
+    <tbody id="epres-${id}">
+      <tr><td><input type="text" placeholder="200"/></td><td><input type="text" placeholder="Returns resource successfully"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td></tr>
+      <tr><td><input type="text" placeholder="404"/></td><td><input type="text" placeholder="Resource not found"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td></tr>
+    </tbody></table>
+    <button class="btn-add-row" onclick="addResRow(${id})">＋ Add response</button>
 
-        <label style="margin-top:10px">Expected Responses</label>
-        <table class="kv"><thead><tr><th style="width:80px">Status</th><th>Description</th><th></th></tr></thead>
-        <tbody id="epres-${id}">
-          <tr><td><input type="text" placeholder="200"/></td><td><input type="text" placeholder="Returns resource successfully"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td></tr>
-          <tr><td><input type="text" placeholder="404"/></td><td><input type="text" placeholder="Resource not found"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td></tr>
-        </tbody></table>
-        <button class="btn-add-row" onclick="addResRow(${id})">＋ Add response</button>
+    <!-- Response validation -->
+    <label class="resp-toggle" onclick="toggleRespSection(${id})">
+      <input type="checkbox" id="eprespchk-${id}" onclick="event.stopPropagation();toggleRespSection(${id})"/>
+      <span class="resp-toggle-label">Validate response JSON</span>
+      <span class="resp-toggle-hint">${tcNum}_response.json</span>
+    </label>
+    <div id="ep-resp-section-${id}" style="display:none;margin-top:8px">
+      <label style="margin-top:0">
+        Expected Response JSON
+        <span class="file-tag">${tcNum}_response.json</span>
+      </label>
+      <textarea id="eprespjson-${id}" rows="5" placeholder='{"id":"ff8081...","name":"Apple MacBook Pro 16","data":{"color":"silver"}}'></textarea>
+    </div>
 
-      </div>`;
+  </div>`;
+}
+
+function toggleEp(id, forceOpen) {
+  const body = document.getElementById('epbody-' + id);
+  const chev = document.getElementById('epc-' + id);
+  const open = body.classList.contains('open');
+  if (forceOpen || !open) { body.classList.add('open'); body.style.display = 'block'; chev.classList.add('open'); }
+  else { body.classList.remove('open'); body.style.display = 'none'; chev.classList.remove('open'); }
+}
+
+function toggleRespSection(id) {
+  const chk = document.getElementById('eprespchk-' + id);
+  document.getElementById('ep-resp-section-' + id).style.display = chk.checked ? 'block' : 'none';
+}
+
+function delEp(e, id) {
+  e.stopPropagation();
+  document.getElementById('ep-' + id).remove();
+  endpoints = endpoints.filter(x => x.id !== id);
+}
+
+function onMethodChange(id) {
+  const m = document.getElementById('epm-' + id).value;
+  document.getElementById('epb-' + id).textContent = m;
+  document.getElementById('epb-' + id).className = 'ep-badge ' + m;
+  document.getElementById('ep-req-section-' + id).style.display = ['POST','PUT','PATCH'].includes(m) ? 'block' : 'none';
+}
+
+function updatePreview(id) {
+  document.getElementById('epu-' + id).textContent = document.getElementById('epurl-' + id).value || '/api/endpoint';
+}
+
+// ── KV helpers ──
+function addHdrRow()        { addKvRow('global-hdr-body', 'Header-Key', 'value'); }
+function addEpHdrRow(id)    { addKvRow('ephdrs-' + id, 'Header-Key', 'value'); }
+function addParamRow(id)    { addKvRow('epparams-' + id, 'paramName', 'example'); }
+function addResRow(id) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" placeholder="400"/></td><td><input type="text" placeholder="Bad request"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td>`;
+  document.getElementById('epres-' + id).appendChild(tr);
+}
+function addKvRow(tbodyId, kp, vp) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" placeholder="${kp}"/></td><td><input type="text" placeholder="${vp}"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td>`;
+  document.getElementById(tbodyId).appendChild(tr);
+}
+function delRow(btn) { btn.closest('tr').remove(); }
+function switchHdrMode(m) {
+  hdrMode = m;
+  document.querySelectorAll('.mini-tab').forEach((el, i) => el.classList.toggle('active', ['kv','raw'][i] === m));
+  document.getElementById('hdr-kv').style.display = m === 'kv' ? 'block' : 'none';
+  document.getElementById('hdr-raw').style.display = m === 'raw' ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// Collect form data
+// ═══════════════════════════════════════════════════════
+function getKv(tbodyId) {
+  const out = {};
+  document.querySelectorAll('#' + tbodyId + ' tr').forEach(r => {
+    const i = r.querySelectorAll('input');
+    if (i[0]?.value.trim()) out[i[0].value.trim()] = i[1]?.value.trim() || '';
+  });
+  return out;
+}
+function getGlobalHeaders() {
+  if (hdrMode === 'raw') { try { return JSON.parse(document.getElementById('hdr-raw-val').value || '{}'); } catch { return {}; } }
+  return getKv('global-hdr-body');
+}
+
+function collectEndpoints() {
+  return endpoints.map(ep => {
+    const id = ep.id, tc = ep.tcNum;
+    const method = document.getElementById('epm-' + id)?.value || 'GET';
+    const hasBody = ['POST','PUT','PATCH'].includes(method);
+    const validateResp = document.getElementById('eprespchk-' + id)?.checked || false;
+
+    const resRows = document.querySelectorAll('#epres-' + id + ' tr');
+    const responses = [];
+    resRows.forEach(r => {
+      const i = r.querySelectorAll('input');
+      if (i[0]?.value.trim()) responses.push({ status: i[0].value.trim(), desc: i[1]?.value.trim() });
+    });
+
+    return {
+      id, tcNum: tc, method,
+      url:          document.getElementById('epurl-' + id)?.value.trim() || '',
+      baseUrl:      document.getElementById('epbase-' + id)?.value.trim() || '',
+      description:  document.getElementById('epdesc-' + id)?.value.trim() || '',
+      requestBody:  hasBody ? (document.getElementById('epjson-' + id)?.value.trim() || '') : '',
+      params:       getKv('epparams-' + id),
+      headers:      getKv('ephdrs-' + id),
+      responses,
+      validateResp,
+      responseBody: validateResp ? (document.getElementById('eprespjson-' + id)?.value.trim() || '') : ''
+    };
+  }).filter(ep => ep.url);
+}
+
+function buildContext() {
+  const fn   = document.getElementById('feature-name').value.trim() || 'API';
+  const ac   = document.getElementById('ac').value.trim();
+  const gh   = getGlobalHeaders();
+  const eps  = collectEndpoints();
+  const cov  = document.getElementById('coverage').value;
+
+  let ctx = 'Feature: ' + fn + '\n\n';
+  ctx += 'Acceptance Criteria:\n' + (ac || '(none provided)') + '\n\n';
+  ctx += 'Auth: x-api-key header — token fetched via restUtils.getApiToken()\n';
+  ctx += 'Global Headers: ' + JSON.stringify(gh) + '\n\n';
+  ctx += 'Endpoints (' + eps.length + '):\n';
+
+  eps.forEach((ep, i) => {
+    ctx += '\n[Endpoint ' + (i+1) + ' / ' + ep.tcNum + ']\n';
+    ctx += '  Method: ' + ep.method + '\n';
+    ctx += '  URL: ' + ep.url + '\n';
+    if (ep.baseUrl)      ctx += '  Base URL: ' + ep.baseUrl + '\n';
+    if (ep.description)  ctx += '  Description: ' + ep.description + '\n';
+    if (ep.requestBody)  ctx += '  Request Body (stored as ' + ep.tcNum + '_request.json): ' + ep.requestBody + '\n';
+    if (Object.keys(ep.params).length)  ctx += '  Path/Query Params: ' + JSON.stringify(ep.params) + '\n';
+    if (Object.keys(ep.headers).length) ctx += '  Endpoint Headers: ' + JSON.stringify(ep.headers) + '\n';
+    if (ep.responses.length) ctx += '  Expected Responses:\n' + ep.responses.map(r => '    - ' + r.status + ': ' + r.desc).join('\n') + '\n';
+    if (ep.validateResp && ep.responseBody) ctx += '  Response Validation (stored as ' + ep.tcNum + '_response.json): YES\n';
+  });
+
+  return { fn, eps, cov, ctx };
+}
+
+// ═══════════════════════════════════════════════════════
+// Generate
+// ═══════════════════════════════════════════════════════
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'statusbar' + (type ? ' ' + type : '');
+}
+function setStep(n) {
+  ['ps1','ps2'].forEach((id, i) => {
+    document.getElementById(id).className = 'prog-step' + (i+1 < n ? ' done' : i+1 === n ? ' active' : '');
+  });
+}
+
+async function generate() {
+  const { fn, eps, cov, ctx } = buildContext();
+  if (!eps.length) { setStatus('Add at least one endpoint before generating.', 'err'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  const bt  = document.getElementById('btn-text');
+  btn.disabled = true; bt.textContent = 'Generating...';
+  btn.insertAdjacentHTML('afterbegin', '<div class="spin" id="spin"></div>');
+  document.getElementById('prog').classList.add('show');
+  setStep(1); setStatus('Step 1/2 — Generating feature file from acceptance criteria...');
+
+  const t1 = setTimeout(() => { setStep(2); setStatus('Step 2/2 — Generating step definitions...'); }, 22000);
+
+  try {
+    const resp = await fetch('/api/generate-tests', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inputMode: 'requirements', apiDescription: ctx,
+        coverageFocus: cov, testCaseCount: 0,
+        featureName: fn, endpoints: eps
+      })
+    });
+    clearTimeout(t1);
+    const data = await resp.json();
+    if (data.error) { setStatus('Error: ' + data.error, 'err'); return; }
+
+    lastFeature = data.gherkin || '';
+    lastStepDefs = data.stepDefinitions || '';
+    lastFeatureName = fn;
+
+    document.getElementById('code-feature').textContent = lastFeature;
+    document.getElementById('code-stepdefs').textContent = lastStepDefs;
+    document.getElementById('lbl-feature').textContent  = 'src/test/resources/features/' + fn + '.feature';
+    document.getElementById('lbl-stepdefs').textContent = 'src/test/java/stepDefinitions/' + fn + 'StepDefinitions.java';
+
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('out-area').style.display    = 'block';
+    document.getElementById('push-btn').style.display    = 'inline-block';
+
+    const sb = document.getElementById('scen-badge');
+    sb.textContent = data.count + ' scenario' + (data.count !== 1 ? 's' : '');
+    sb.style.display = 'inline-block';
+
+    document.getElementById('gh-branch').value =
+      'feature/' + fn.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-tests';
+
+    ['ps1','ps2'].forEach(id => document.getElementById(id).className = 'prog-step done');
+    setStatus('Done! ' + data.count + ' scenario' + (data.count !== 1 ? 's' : '') + ' generated. Ready to push.', 'ok');
+
+  } catch (err) {
+    setStatus('Network error: ' + err.message + ' — is Spring Boot running on :8080?', 'err');
+  } finally {
+    btn.disabled = false; bt.textContent = 'Generate BDD Test Suite';
+    const s = document.getElementById('spin'); if (s) s.remove();
+  }
+}
+
+function clearAll() {
+  if (!confirm('Clear all fields?')) return;
+  document.getElementById('feature-name').value = '';
+  document.getElementById('ac').value = '';
+  document.getElementById('global-hdr-body').innerHTML = '';
+  document.getElementById('ep-container').innerHTML = '';
+  endpoints = []; epCount = 0;
+  document.getElementById('out-area').style.display   = 'none';
+  document.getElementById('empty-state').style.display = 'flex';
+  document.getElementById('push-btn').style.display   = 'none';
+  document.getElementById('scen-badge').style.display = 'none';
+  document.getElementById('prog').classList.remove('show');
+  setStatus('Cleared. Ready to start fresh.');
+}
+
+// ═══════════════════════════════════════════════════════
+// Output tabs
+// ═══════════════════════════════════════════════════════
+function switchOut(o) {
+  activeOut = o;
+  document.querySelectorAll('.out-tab').forEach((el, i) =>
+    el.classList.toggle('active', ['feature','stepdefs'][i] === o));
+  ['feature','stepdefs'].forEach(p =>
+    document.getElementById('panel-' + p).style.display = p === o ? 'block' : 'none');
+}
+function doCopy(which) {
+  const map = { feature: lastFeature, stepdefs: lastStepDefs };
+  navigator.clipboard.writeText(map[which] || '').then(() => {
+    const i = ['feature','stepdefs'].indexOf(activeOut);
+    const btns = document.querySelectorAll('.copy-btn');
+    if (btns[i]) { btns[i].textContent = 'Copied!'; setTimeout(() => btns[i].textContent = 'Copy', 1500); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// Push to GitHub — builds TC file map from endpoint data
+// ═══════════════════════════════════════════════════════
+function openModal()  {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('push-result').className = 'push-result';
+  document.getElementById('push-result').innerHTML = '';
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function doPush() {
+  const token  = document.getElementById('gh-token').value.trim();
+  const owner  = document.getElementById('gh-owner').value.trim();
+  const repo   = document.getElementById('gh-repo').value.trim();
+  const base   = document.getElementById('gh-base').value.trim();
+  const branch = document.getElementById('gh-branch').value.trim();
+  if (!token)  { alert('Enter your GitHub PAT token.'); return; }
+  if (!branch) { alert('Enter a feature branch name.'); return; }
+
+  // Build testDataFiles map from endpoint cards
+  const testDataFiles = {};
+  const eps = collectEndpoints();
+  eps.forEach(ep => {
+    if (ep.requestBody) testDataFiles[ep.tcNum + '_req'] = ep.requestBody;
+    if (ep.validateResp && ep.responseBody) testDataFiles[ep.tcNum + '_res'] = ep.responseBody;
+  });
+
+  const btn = document.getElementById('push-confirm');
+  const bt  = document.getElementById('push-btn-text');
+  btn.disabled = true; bt.textContent = 'Pushing...';
+  btn.insertAdjacentHTML('afterbegin', '<div class="spin" id="pspin"></div>');
+  const re = document.getElementById('push-result');
+  re.className = 'push-result'; re.innerHTML = '';
+
+  const totalFiles = 2 + Object.keys(testDataFiles).length;
+
+  try {
+    const resp = await fetch('/api/push-to-github', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gherkinContent: lastFeature,
+        stepDefinitionsContent: lastStepDefs,
+        testDataFiles,
+        apiName: lastFeatureName,
+        githubToken: token,
+        repoOwner: owner, repoName: repo,
+        baseBranch: base, featureBranch: branch
+      })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      const tcLines = eps
+        .flatMap(ep => {
+          const lines = [];
+          if (ep.requestBody) lines.push(`<code>testdata/${lastFeatureName}/${ep.tcNum}_request.json</code>`);
+          if (ep.validateResp && ep.responseBody) lines.push(`<code>testdata/${lastFeatureName}/${ep.tcNum}_response.json</code>`);
+          return lines;
+        }).join('<br/>');
+      re.className = 'push-result ok';
+      re.innerHTML = `
+        <strong>${totalFiles} files pushed → ${branch}</strong><br/>
+        <code>features/${lastFeatureName}.feature</code><br/>
+        <code>stepDefinitions/${lastFeatureName}StepDefinitions.java</code><br/>
+        ${tcLines}<br/><br/>
+        <a href="${data.branchUrl}" target="_blank">View branch ↗</a>
+        &nbsp;&nbsp;<a href="${data.prUrl}" target="_blank">Raise PR ↗</a>`;
+    } else {
+      re.className = 'push-result err';
+      re.textContent = 'Error: ' + data.message;
     }
+  } catch (err) {
+    re.className = 'push-result err';
+    re.textContent = 'Network error: ' + err.message;
+  } finally {
+    btn.disabled = false; bt.textContent = 'Push files';
+    const s = document.getElementById('pspin'); if (s) s.remove();
+  }
+}
 
-    function toggleEp(id, forceOpen) {
-      const body = document.getElementById('epbody-' + id);
-      const chev = document.getElementById('epc-' + id);
-      const open = body.classList.contains('open');
-      if (forceOpen || !open) { body.classList.add('open'); body.style.display='block'; chev.classList.add('open'); }
-      else { body.classList.remove('open'); body.style.display='none'; chev.classList.remove('open'); }
-    }
-
-    function delEp(e, id) { e.stopPropagation(); document.getElementById('ep-'+id).remove(); endpoints = endpoints.filter(x=>x.id!==id); }
-
-    function onMethodChange(id) {
-      const m = document.getElementById('epm-'+id).value;
-      const badge = document.getElementById('epb-'+id);
-      badge.textContent = m; badge.className = 'ep-badge ' + m;
-      document.getElementById('ep-body-section-'+id).style.display = ['POST','PUT','PATCH'].includes(m)?'block':'none';
-    }
-
-    function updatePreview(id) {
-      document.getElementById('epu-'+id).textContent = document.getElementById('epurl-'+id).value || '/api/endpoint';
-    }
-
-    // ── KV helpers ──
-    function addHdrRow() { addKvRow('global-hdr-body','Header-Key','value'); }
-    function addEpHdrRow(id) { addKvRow('ephdrs-'+id,'Header-Key','value'); }
-    function addParamRow(id) { addKvRow('epparams-'+id,'paramName','example'); }
-    function addResRow(id) {
-      const tr = document.createElement('tr');
-      tr.innerHTML=`<td><input type="text" placeholder="400"/></td><td><input type="text" placeholder="Bad request"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td>`;
-      document.getElementById('epres-'+id).appendChild(tr);
-    }
-    function addKvRow(tbodyId, kp, vp) {
-      const tr = document.createElement('tr');
-      tr.innerHTML=`<td><input type="text" placeholder="${kp}"/></td><td><input type="text" placeholder="${vp}"/></td><td><button class="kv-del" onclick="delRow(this)">×</button></td>`;
-      document.getElementById(tbodyId).appendChild(tr);
-    }
-    function delRow(btn) { btn.closest('tr').remove(); }
-
-    function switchHdrMode(m) {
-      hdrMode = m;
-      document.querySelectorAll('.mini-tab').forEach((el,i)=>el.classList.toggle('active',['kv','raw'][i]===m));
-      document.getElementById('hdr-kv').style.display = m==='kv'?'block':'none';
-      document.getElementById('hdr-raw').style.display = m==='raw'?'block':'none';
-    }
-
-    // ═══════════════════════════════════════
-    // Collect form data
-    // ═══════════════════════════════════════
-    function getKv(tbodyId) {
-      const rows = document.querySelectorAll('#'+tbodyId+' tr'), out={};
-      rows.forEach(r=>{ const i=r.querySelectorAll('input'); if(i[0]?.value.trim()) out[i[0].value.trim()]=i[1]?.value.trim()||''; });
-      return out;
-    }
-    function getGlobalHeaders() {
-      if(hdrMode==='raw'){try{return JSON.parse(document.getElementById('hdr-raw-val').value||'{}')}catch{return{}}}
-      return getKv('global-hdr-body');
-    }
-    function collectEndpoints() {
-      return endpoints.map(ep=>{
-        const id=ep.id, m=document.getElementById('epm-'+id)?.value||'GET';
-        const resRows = document.querySelectorAll('#epres-'+id+' tr');
-        const responses=[];
-        resRows.forEach(r=>{const i=r.querySelectorAll('input');if(i[0]?.value.trim())responses.push({status:i[0].value.trim(),desc:i[1]?.value.trim()})});
-        return {
-          method:m, url:document.getElementById('epurl-'+id)?.value.trim()||'',
-          baseUrl:document.getElementById('epbase-'+id)?.value.trim()||'',
-          description:document.getElementById('epdesc-'+id)?.value.trim()||'',
-          requestBody:['POST','PUT','PATCH'].includes(m)?document.getElementById('epjson-'+id)?.value.trim():'',
-          params:getKv('epparams-'+id), headers:getKv('ephdrs-'+id), responses
-        };
-      }).filter(ep=>ep.url);
-    }
-
-    function buildContext() {
-      const fn   = document.getElementById('feature-name').value.trim()||'API';
-      const ac   = document.getElementById('ac').value.trim();
-      const gh   = getGlobalHeaders();
-      const eps  = collectEndpoints();
-      const cov  = document.getElementById('coverage').value;
-
-      let ctx = `Feature: ${fn}\n\nAcceptance Criteria:\n${ac||'(none provided)'}\n\n`;
-      ctx += `Global Headers: ${JSON.stringify(gh)}\n\n`;
-      ctx += `Auth: Token fetched via restUtils.getApiToken() and passed as header "x-api-key"\n\n`;
-      ctx += `Endpoints (${eps.length}):\n`;
-      eps.forEach((ep,i)=>{
-        ctx+=`\n[Endpoint ${i+1}]\n`;
-        ctx+=`  Method: ${ep.method}\n  URL: ${ep.url}\n`;
-        if(ep.baseUrl)     ctx+=`  Base URL: ${ep.baseUrl}\n`;
-        if(ep.description) ctx+=`  Description: ${ep.description}\n`;
-        if(ep.requestBody) ctx+=`  Request Body: ${ep.requestBody}\n`;
-        if(Object.keys(ep.params).length)  ctx+=`  Path/Query Params: ${JSON.stringify(ep.params)}\n`;
-        if(Object.keys(ep.headers).length) ctx+=`  Endpoint Headers: ${JSON.stringify(ep.headers)}\n`;
-        if(ep.responses.length) ctx+=`  Expected Responses:\n`+ep.responses.map(r=>`    - ${r.status}: ${r.desc}`).join('\n')+'\n';
-      });
-      return {fn, ac, eps, cov, ctx};
-    }
-
-    // ═══════════════════════════════════════
-    // Generate
-    // ═══════════════════════════════════════
-    function setStatus(msg,type){const el=document.getElementById('status');el.textContent=msg;el.className='statusbar'+(type?' '+type:'')}
-    function setStep(n){['ps1','ps2'].forEach((id,i)=>{document.getElementById(id).className='prog-step'+(i+1<n?' done':i+1===n?' active':'')})}
-
-    async function generate() {
-      const {fn, eps, cov, ctx} = buildContext();
-      if(!eps.length){setStatus('Add at least one endpoint before generating.','err');return;}
-
-      const btn=document.getElementById('gen-btn'), bt=document.getElementById('btn-text');
-      btn.disabled=true; bt.textContent='Generating...';
-      btn.insertAdjacentHTML('afterbegin','<div class="spin" id="spin"></div>');
-      document.getElementById('prog').classList.add('show');
-      setStep(1); setStatus('Step 1/2 — Generating feature file from acceptance criteria...');
-
-      const t1=setTimeout(()=>{setStep(2);setStatus('Step 2/2 — Generating step definitions...')},25000);
-
-      try{
-        const resp = await fetch('/api/generate-tests',{
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            inputMode:'requirements', apiDescription:ctx,
-            coverageFocus:cov, testCaseCount:0, featureName:fn, endpoints:eps
-          })
-        });
-        clearTimeout(t1);
-        const data = await resp.json();
-        if(data.error){setStatus('Error: '+data.error,'err');return;}
-
-        lastFeature=data.gherkin||''; lastStepDefs=data.stepDefinitions||''; lastFeatureName=fn;
-
-        document.getElementById('code-feature').textContent=lastFeature;
-        document.getElementById('code-stepdefs').textContent=lastStepDefs;
-        document.getElementById('lbl-feature').textContent='src/test/resources/features/'+fn+'.feature';
-        document.getElementById('lbl-stepdefs').textContent='src/test/java/stepDefinitions/'+fn+'StepDefinitions.java';
-
-        document.getElementById('empty-state').style.display='none';
-        document.getElementById('out-area').style.display='block';
-        document.getElementById('push-btn').style.display='inline-block';
-
-        const sb=document.getElementById('scen-badge');
-        sb.textContent=data.count+' scenario'+(data.count!==1?'s':''); sb.style.display='inline-block';
-
-        document.getElementById('gh-branch').value='feature/'+fn.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')+'-tests';
-
-        ['ps1','ps2'].forEach(id=>document.getElementById(id).className='prog-step done');
-        setStatus('Done! '+data.count+' scenario'+(data.count!==1?'s':'')+' generated. Ready to push.','ok');
-
-      }catch(err){
-        setStatus('Network error: '+err.message+' — is Spring Boot running on :8080?','err');
-      }finally{
-        btn.disabled=false; bt.textContent='Generate BDD Test Suite';
-        const s=document.getElementById('spin'); if(s)s.remove();
-      }
-    }
-
-    function clearAll(){
-      if(!confirm('Clear all fields?'))return;
-      document.getElementById('feature-name').value='';
-      document.getElementById('ac').value='';
-      document.getElementById('global-hdr-body').innerHTML='';
-      document.getElementById('ep-container').innerHTML='';
-      endpoints=[]; epCount=0;
-      document.getElementById('out-area').style.display='none';
-      document.getElementById('empty-state').style.display='flex';
-      document.getElementById('push-btn').style.display='none';
-      document.getElementById('scen-badge').style.display='none';
-      document.getElementById('prog').classList.remove('show');
-      setStatus('Cleared. Ready to start fresh.');
-    }
-
-    // ═══════════════════════════════════════
-    // Output tabs & copy
-    // ═══════════════════════════════════════
-    function switchOut(o){
-      activeOut=o;
-      document.querySelectorAll('.out-tab').forEach((el,i)=>el.classList.toggle('active',['feature','stepdefs'][i]===o));
-      ['feature','stepdefs'].forEach(p=>document.getElementById('panel-'+p).style.display=p===o?'block':'none');
-    }
-    function doCopy(which){
-      const map={feature:lastFeature,stepdefs:lastStepDefs};
-      navigator.clipboard.writeText(map[which]||'').then(()=>{
-        const btns=document.querySelectorAll('.copy-btn');
-        const i=['feature','stepdefs'].indexOf(activeOut);
-        if(btns[i]){btns[i].textContent='Copied!';setTimeout(()=>btns[i].textContent='Copy',1500)}
-      });
-    }
-
-    // ═══════════════════════════════════════
-    // Push to GitHub
-    // ═══════════════════════════════════════
-    function openModal(){document.getElementById('modal').classList.add('open');document.getElementById('push-result').className='push-result';document.getElementById('push-result').innerHTML=''}
-    function closeModal(){document.getElementById('modal').classList.remove('open')}
-
-    async function doPush(){
-      const token=document.getElementById('gh-token').value.trim();
-      const owner=document.getElementById('gh-owner').value.trim();
-      const repo=document.getElementById('gh-repo').value.trim();
-      const base=document.getElementById('gh-base').value.trim();
-      const branch=document.getElementById('gh-branch').value.trim();
-      if(!token){alert('Enter your GitHub PAT token.');return;}
-      if(!branch){alert('Enter a feature branch name.');return;}
-
-      const btn=document.getElementById('push-confirm'),bt=document.getElementById('push-btn-text');
-      btn.disabled=true; bt.textContent='Pushing...';
-      btn.insertAdjacentHTML('afterbegin','<div class="spin" id="pspin"></div>');
-      const re=document.getElementById('push-result'); re.className='push-result'; re.innerHTML='';
-
-      try{
-        const resp=await fetch('/api/push-to-github',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            gherkinContent:lastFeature, stepDefinitionsContent:lastStepDefs,
-            apiName:lastFeatureName, githubToken:token,
-            repoOwner:owner, repoName:repo, baseBranch:base, featureBranch:branch
-          })
-        });
-        const data=await resp.json();
-        if(data.success){
-          re.className='push-result ok';
-          re.innerHTML=`<strong>2 files pushed → ${branch}</strong><br/>
-            <code>src/test/resources/features/${lastFeatureName}.feature</code><br/>
-            <code>src/test/java/stepDefinitions/${lastFeatureName}StepDefinitions.java</code><br/><br/>
-            <a href="${data.branchUrl}" target="_blank">View branch ↗</a> &nbsp; <a href="${data.prUrl}" target="_blank">Raise PR ↗</a>`;
-        }else{re.className='push-result err';re.textContent='Error: '+data.message;}
-      }catch(err){re.className='push-result err';re.textContent='Network error: '+err.message}
-      finally{btn.disabled=false;bt.textContent='Push 2 files';const s=document.getElementById('pspin');if(s)s.remove()}
-    }
-
-
-    // ═══════════════════════════════════════
-    // Test Data File management
-    // ═══════════════════════════════════════
-    let tcCount = 0;
-    let tcFiles = {}; // key=TC_01, value=json string
-
-    function addTcFile() {
-      tcCount++;
-      const key = 'TC_' + String(tcCount).padStart(2, '0');
-      tcFiles[key] = '';
-      const el = document.createElement('div');
-      el.className = 'tc-card'; el.id = 'tc-card-' + key;
-      el.innerHTML = `
-        <div class="tc-card-hd">
-          <span class="tc-num">${key}</span>
-          <span class="tc-label">${key}_request.json</span>
-          <button class="tc-del" onclick="delTcFile('${key}')">×</button>
-        </div>
-        <div class="tc-body">
-          <label style="margin-top:0;margin-bottom:5px">Description <span style="color:var(--text3);font-weight:400">(optional note)</span></label>
-          <input type="text" id="tc-desc-${key}" placeholder="e.g. Create laptop with silver color"/>
-          <label style="margin-top:8px">Request Body (JSON) → stored as ${key}_request.json</label>
-          <textarea id="tc-json-${key}" rows="5" placeholder='{}' oninput="updateTcFile('${key}')"></textarea>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:8px 10px;background:var(--surface3);border-radius:var(--radius-sm);border:1px solid var(--border)">
-            <input type="checkbox" id="tc-resp-chk-${key}" onchange="toggleRespJson('${key}')" style="width:14px;height:14px;accent-color:var(--green);cursor:pointer"/>
-            <label for="tc-resp-chk-${key}" style="margin:0;font-size:12px;color:var(--text2);cursor:pointer;font-weight:500">Validate response JSON</label>
-            <span style="font-size:10px;color:var(--text3)">→ stored as ${key}_response.json</span>
-          </div>
-          <div id="tc-resp-section-${key}" style="display:none;margin-top:8px">
-            <label style="margin-top:0">Expected Response JSON → ${key}_response.json</label>
-            <textarea id="tc-resp-json-${key}" rows="5" placeholder='{"id":"ff8081...","data":{"color":"silver"}}'></textarea>
-          </div>
-        </div>`;
-      document.getElementById('tc-container').appendChild(el);
-    }
-
-    function delTcFile(key) {
-      document.getElementById('tc-card-' + key).remove();
-      delete tcFiles[key];
-    }
-
-    function updateTcFile(key) {
-      tcFiles[key] = document.getElementById('tc-json-' + key)?.value || '';
-    }
-
-    function toggleRespJson(key) {
-      const chk = document.getElementById('tc-resp-chk-' + key);
-      document.getElementById('tc-resp-section-' + key).style.display = chk.checked ? 'block' : 'none';
-    }
-
-    function collectTcFiles() {
-      const requests = {}, responses = {};
-      Object.keys(tcFiles).forEach(key => {
-        const reqVal = document.getElementById('tc-json-' + key)?.value?.trim();
-        if (reqVal) requests[key] = reqVal;
-        const chk = document.getElementById('tc-resp-chk-' + key);
-        if (chk?.checked) {
-          const respVal = document.getElementById('tc-resp-json-' + key)?.value?.trim();
-          if (respVal) responses[key] = respVal;
-        }
-      });
-      return { requests, responses };
-    }
-
-    // ── Override doPush to include TC files ──────────────────────────────────
-    const _origDoPush = doPush;
-    async function doPush() {
-      const token  = document.getElementById('gh-token').value.trim();
-      const owner  = document.getElementById('gh-owner').value.trim();
-      const repo   = document.getElementById('gh-repo').value.trim();
-      const base   = document.getElementById('gh-base').value.trim();
-      const branch = document.getElementById('gh-branch').value.trim();
-      if (!token)  { alert('Enter your GitHub PAT token.'); return; }
-      if (!branch) { alert('Enter a feature branch name.'); return; }
-
-      const btn = document.getElementById('push-confirm'), bt = document.getElementById('push-btn-text');
-      btn.disabled = true; bt.textContent = 'Pushing...';
-      btn.insertAdjacentHTML('afterbegin', '<div class="spin" id="pspin"></div>');
-      const re = document.getElementById('push-result'); re.className = 'push-result'; re.innerHTML = '';
-
-      const { requests: tcRequests, responses: tcResponses } = collectTcFiles();
-      const allTcFiles = { ...tcRequests };
-      // Merge response files with different keys
-      const testDataFiles = {};
-      Object.entries(tcRequests).forEach(([k,v]) => testDataFiles[k + '_req'] = v);
-      Object.entries(tcResponses).forEach(([k,v]) => testDataFiles[k + '_res'] = v);
-      const totalTc = Object.keys(tcRequests).length + Object.keys(tcResponses).length;
-
-      try {
-        const resp = await fetch('/api/push-to-github', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            gherkinContent: lastFeature,
-            stepDefinitionsContent: lastStepDefs,
-            testDataFiles: testDataFiles,
-            apiName: lastFeatureName,
-            githubToken: token,
-            repoOwner: owner, repoName: repo,
-            baseBranch: base, featureBranch: branch
-          })
-        });
-        const data = await resp.json();
-        if (data.success) {
-          const reqLines = Object.keys(tcRequests).map(k =>
-            `<code>testdata/${lastFeatureName}/${k}_request.json</code>`).join('<br/>');
-          const resLines = Object.keys(tcResponses).map(k =>
-            `<code>testdata/${lastFeatureName}/${k}_response.json</code>`).join('<br/>');
-          re.className = 'push-result ok';
-          re.innerHTML = `
-            <strong>${2 + totalTc} files pushed → ${branch}</strong><br/>
-            <code>features/${lastFeatureName}.feature</code><br/>
-            <code>stepDefinitions/${lastFeatureName}StepDefinitions.java</code><br/>
-            ${reqLines}<br/>${resLines}
-            <br/><a href="${data.branchUrl}" target="_blank">View branch ↗</a>
-            &nbsp;&nbsp;<a href="${data.prUrl}" target="_blank">Raise PR ↗</a>`;
-        } else {
-          re.className = 'push-result err';
-          re.textContent = 'Error: ' + data.message;
-        }
-      } catch (err) {
-        re.className = 'push-result err';
-        re.textContent = 'Network error: ' + err.message;
-      } finally {
-        btn.disabled = false; bt.textContent = 'Push files';
-        const s = document.getElementById('pspin'); if (s) s.remove();
-      }
-    }
-
-    // ── Init ──
-    addEndpoint();
-    addTcFile(); // start with one TC slot
+// ── Init ──
+addEndpoint();
 </script>
 </body>
 </html>
